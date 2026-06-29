@@ -245,6 +245,17 @@ function glyph(ch,font){
     if(on>=S*S*0.4)leds.push(L);}                             // ≥40% pixel coverage = lit
   return leds;}
 const textFrames=(t,font)=>[...(t||' ')].slice(0,codec.MAX_FRAMES).map(ch=>glyph(ch,font));
+// Flatten the per-char glyphs into one horizontal column strip (lit columns trimmed,
+// one blank column between letters) so previews can SCROLL it, not flash whole frames.
+// Each entry is an array of lit row indices, or null for a blank/gap column.
+function textCols(text,font){const cols=[];
+  textFrames(text||' ',font).forEach(leds=>{const g=new Set(leds);let lo=N,hi=-1;
+    for(let c=0;c<N;c++)for(let r=0;r<N;r++)if(g.has(r*N+c)){lo=Math.min(lo,c);hi=Math.max(hi,c);}
+    if(hi<0){cols.push(null,null);return;}
+    for(let c=lo;c<=hi;c++){const col=[];for(let r=0;r<N;r++)if(g.has(r*N+c))col.push(r);cols.push(col);}
+    cols.push(null);});                                  // gap between letters
+  return cols;}
+const scrollWindow=(cols,off,w)=>{const leds=[];for(let v=0;v<w;v++){const c=cols[(((Math.floor(off)+v)%cols.length)+cols.length)%cols.length];if(c)c.forEach(r=>leds.push(r*N+v));}return leds;};
 $('#rasterize').onclick=()=>{lit.clear();glyph(($('#toPix').value||' ')[0]).forEach(L=>lit.add(L));drawGrid();};
 $('#img').onchange=async e=>{const f=e.target.files[0];if(!f)return;const bmp=await createImageBitmap(f);
   const oc=document.createElement('canvas');oc.width=N;oc.height=N;oc.getContext('2d').drawImage(bmp,0,0,N,N);
@@ -267,8 +278,12 @@ function thumb(itemEl,canvas,e){
   const paint=leds=>{x.fillStyle='#05070f';x.fillRect(0,0,N,N);x.fillStyle='#ff3b3b';(leds||[]).forEach(L=>x.fillRect(L%N,(L/N)|0,1,1));};
   paint(previewLeds(e));
   if(e.type!=='gif'&&e.type!=='text')return null;
-  const fr=e.type==='gif'?e.frames:textFrames(e.text,e.font),fps=e.type==='gif'?(e.fps||10):4;
-  const go=(persist,btn)=>{stopListAnim();let k=0;const id=setInterval(()=>paint(fr[k++%fr.length]||[]),1000/Math.max(1,fps));
+  // GIF cycles whole frames; text SCROLLS its column strip (matches the editor preview).
+  let tick,ms;
+  if(e.type==='text'){const cols=textCols(e.text,e.font),step=Math.max(.06,(e.speed||30)/60);let off=0;
+    ms=1000/30;tick=()=>{paint(scrollWindow(cols,off,N));off+=step;};}
+  else{const fr=e.frames;let k=0;ms=1000/Math.max(1,e.fps||10);tick=()=>paint(fr[k++%fr.length]||[]);}
+  const go=(persist,btn)=>{stopListAnim();const id=setInterval(tick,ms);
     if(btn)btn.textContent='■';listAnim={id,persist,item:itemEl,reset:()=>{paint(previewLeds(e));if(btn)btn.textContent='▶';}};};
   itemEl.addEventListener('mouseenter',()=>{if(!(listAnim&&listAnim.persist))go(false,null);});
   itemEl.addEventListener('mouseleave',()=>{if(listAnim&&!listAnim.persist&&listAnim.item===itemEl)stopListAnim();});
@@ -326,10 +341,7 @@ addEventListener('keydown',e=>{   // arrow keys step frames while the GIF editor
 
 /* ---- scrolling text preview ---- */
 let scrollAnim=null;
-function previewScroll(){const frames=textFrames($('#scrollText').value||' ',$('#textFont').value),cols=[];
-  frames.forEach(leds=>{const g=new Set(leds);let lo=N,hi=-1;
-    for(let c=0;c<N;c++)for(let r=0;r<N;r++)if(g.has(r*N+c)){lo=Math.min(lo,c);hi=Math.max(hi,c);}
-    if(hi<0){cols.push(null,null);return;}for(let c=lo;c<=hi;c++){const col=[];for(let r=0;r<N;r++)if(g.has(r*N+c))col.push(r);cols.push(col);}cols.push(null);});
+function previewScroll(){const cols=textCols($('#scrollText').value||' ',$('#textFont').value);
   const cv=$('#scrollCanvas'),x=cv.getContext('2d'),px=cv.height/N,vis=Math.floor(cv.width/px);  // square pixels: cell = one row tall
   if(scrollAnim)cancelAnimationFrame(scrollAnim);if(!cols.length){x.clearRect(0,0,cv.width,cv.height);return;}
   let off=0;const spd=+$('#scrollSpeed').value;
