@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Magene L308 Taillight Manager — Web Bluetooth control &amp; custom patterns</title>
-<meta name="description" content="Free, install-free Web Bluetooth tool for the Magene L308 smart bike taillight. Draw custom patterns, animations and scrolling text, set brightness and brake-alert, and push them to the light — no app, no account. Works on region-locked units.">
+<title>Magene L308 Taillight Manager, Web Bluetooth control &amp; custom patterns</title>
+<meta name="description" content="Free, install-free Web Bluetooth tool for the Magene L308 smart bike taillight. Draw custom patterns, animations and scrolling text, set brightness and brake-alert, and push them to the light, no app, no account. Works on region-locked units.">
 <link rel="canonical" href="https://mchardysam.github.io/magene-l308-taillight/">
 <meta name="theme-color" content="#0f1220">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <!-- Open Graph / Twitter (link previews on Reddit, HN, Discord, X) -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://mchardysam.github.io/magene-l308-taillight/">
 <meta property="og:title" content="Magene L308 Taillight Manager">
-<meta property="og:description" content="Draw custom patterns, animations and scrolling text for the Magene L308 smart taillight and push them over Bluetooth — free, in your browser. Works on region-locked units.">
+<meta property="og:description" content="Draw custom patterns, animations and scrolling text for the Magene L308 smart taillight and push them over Bluetooth, free, in your browser. Works on region-locked units.">
 <meta property="og:image" content="https://mchardysam.github.io/magene-l308-taillight/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Magene L308 Taillight Manager">
-<meta name="twitter:description" content="Draw custom patterns, animations and scrolling text for the Magene L308 and push them over Bluetooth — free, in your browser.">
+<meta name="twitter:description" content="Draw custom patterns, animations and scrolling text for the Magene L308 and push them over Bluetooth, free, in your browser.">
 <meta name="twitter:image" content="https://mchardysam.github.io/magene-l308-taillight/og.png">
 <style>
   :root{--bg:#0f1220;--card:#1a1f33;--ink:#e8ecf5;--mut:#9aa3c0;--accent:#4f8cff;--ok:#36d399;--err:#f76b6b;}
@@ -57,7 +59,7 @@
 <body>
 <header><h1>L308 Manager <span class="sub">· unofficial · works on region-locked units</span></h1></header>
 <div id="nobt" class="hidden" style="background:#3a2a2a;color:#ffd6d6;padding:11px 16px;font-size:13px;line-height:1.5;border-bottom:1px solid #5a3a3a">
-  ⚠️ This browser can't connect to the light — it has no <b>Web Bluetooth</b> support.
+  ⚠️ This browser can't connect to the light, it has no <b>Web Bluetooth</b> support.
   Use <b>Chrome</b> or <b>Edge</b> on <b>desktop</b> or <b>Android</b>
   (Firefox, Safari, and all <b>iOS</b> browsers are unsupported). You can still design,
   preview, import and export patterns here.
@@ -90,7 +92,7 @@
       <button class="ghost" id="export">Backup .bin</button>
       <label class="ghost" style="padding:8px 13px;border-radius:8px;cursor:pointer;background:#26304f">Restore .bin<input type="file" id="importBin" accept=".bin" hidden></label>
     </div>
-    <p class="muted danger" id="pushWarn">"Push to light" is the only action that writes to the light — it replaces the whole store (no read-back, so keep .bin backups). Enabled only when your set differs from what's on the light.</p>
+    <p class="muted danger" id="pushWarn">"Push to light" is the only action that writes to the light, it replaces the whole store (no read-back, so keep .bin backups). Enabled only when your set differs from what's on the light.</p>
   </div>
 
   <!-- library (defaults + community + import) -->
@@ -108,7 +110,7 @@
 
   <!-- type chooser (Create new) -->
   <dialog id="chooserCard">
-    <h2>Create new — pick a type <button class="ghost sm" id="chooserCancel">Cancel</button></h2>
+    <h2>Create new, pick a type <button class="ghost sm" id="chooserCancel">Cancel</button></h2>
     <div class="chooser">
       <div class="choice" data-new="pattern"><div class="ic">▦</div><div class="nm">Pattern</div><div class="ds">draw pixels · solid / flashing / pulsing</div></div>
       <div class="choice" data-new="gif"><div class="ic">🎞</div><div class="nm">GIF</div><div class="ds">multi-frame animation (≤10)</div></div>
@@ -173,12 +175,17 @@
         </select>
         <label>Speed</label><input type="range" id="scrollSpeed" min="1" max="60" value="30"><span id="scrollSpeedV" class="muted">30</span></div>
       <canvas id="scrollCanvas" width="660" height="66" style="margin-top:10px;width:100%;background:#05070f;border-radius:8px;image-rendering:pixelated"></canvas>
-      <p class="muted"><b>Pixel</b> is a built-in 5×7 dot-matrix font (uppercase) — crispest on the grid. The rest are rasterised from system fonts; Mono/Condensed read best. No brightness field for text (verify on hardware).</p>
+      <p class="muted"><b>Pixel</b> is a built-in 5×7 dot-matrix font (uppercase), crispest on the grid. The rest are rasterised from system fonts; Mono/Condensed read best. No brightness field for text (verify on hardware).</p>
     </div>
   </dialog>
 
   <div class="card"><h2>Log</h2><div id="log"></div></div>
 </main>
+
+<footer class="muted" style="max-width:880px;margin:0 auto;padding:14px 18px;border-top:1px solid #2a3150;font-size:12px;line-height:1.6">
+  <a href="https://s.click.aliexpress.com/e/_c36z7cWV" target="_blank" rel="nofollow sponsored noopener" style="color:var(--accent)">Where to buy the L308</a>.
+  Affiliate link, I may earn a small commission at no extra cost to you. Unofficial, not affiliated with Magene.
+</footer>
 
 <script type="module">
 import * as codec from './codec.js';
@@ -253,9 +260,9 @@ $('#gifFps').oninput=()=>$('#gifFpsV').textContent=$('#gifFps').value+' fps';
 /* ---- glyph font + image import ---- */
 // Rasterise one character into the 10×10 grid using ANY chosen font family.
 // Supersample 8× then downsample by coverage so small glyphs stay crisp (not blobby),
-// auto-fit to ~8 rows tall and centre — matching how the device lays out its own font.
+// auto-fit to ~8 rows tall and centre, matching how the device lays out its own font.
 const CORNER=new Set([0,9,90,99]);
-// Built-in 5×7 dot-matrix "Pixel" font — rendered straight to the grid (no font file,
+// Built-in 5×7 dot-matrix "Pixel" font, rendered straight to the grid (no font file,
 // no antialiasing) for a razor-crisp LED look. Uppercase-only by design (classic LED-sign
 // style); lowercase maps up, unknown chars fall back to "?".
 const PX_FONT={
@@ -447,7 +454,7 @@ function openEditor(kind,idx){   // kind: 'pattern'|'gif'|'text' OR an effect ty
   editing=idx;stopListAnim();const isPattern=['pattern','solid','flashing','pulsing'].includes(kind);
   closeDlg('#chooserCard');openDlg('#editorCard');
   show('#edPattern',isPattern);show('#edGif',kind==='gif');show('#edText',kind==='text');
-  $('#edTitle').textContent=(idx==null?'New ':'Editing #'+(idx+1)+' — ')+(kind==='gif'?'GIF':kind==='text'?'scrolling text':'pattern');
+  $('#edTitle').textContent=(idx==null?'New ':'Editing #'+(idx+1)+', ')+(kind==='gif'?'GIF':kind==='text'?'scrolling text':'pattern');
   const e=idx!=null?store[idx]:null;
   if(isPattern){lit.clear();(e?.leds||[]).forEach(L=>lit.add(L));
     const eff=e?e.type:'solid';$('#effect').value=eff;$('#effect').onchange();
@@ -483,8 +490,8 @@ const libList=()=>libTab==='community'?[...packs.community,...packs.imported]:pa
 function renderLibrary(){stopListAnim();const items=libList();$('#libCount').textContent=`(${items.length})`;
   document.querySelectorAll('.libtab').forEach(b=>b.style.background=b.dataset.src===libTab?'var(--accent)':'#26304f');
   $('#libNote').textContent=libTab==='community'
-    ?(items.length?'Community pack — local only; excluded from a public/GitHub build.':'No community pack in this build (it\'s local-only). Use "Import pack…".')
-    :'Built-in originals — public-safe.';
+    ?(items.length?'Community pack, local only; excluded from a public/GitHub build.':'No community pack in this build (it\'s local-only). Use "Import pack…".')
+    :'Built-in originals, public-safe.';
   const g=$('#library');g.innerHTML='';
   items.forEach(e=>{const d=document.createElement('div');d.className='item';
     const c=document.createElement('canvas');c.width=N;c.height=N;const pb=thumb(d,c,e);d.appendChild(c);
@@ -500,8 +507,8 @@ $('#importPack').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try
 /* ---- push / backup ---- */
 const buildStoreFile=()=>codec.buildFile(store.map((e,i)=>recordFromEntry(e,0x8a10+i)));
 $('#push').onclick=async()=>{
-  if(!confirm(`Push ${store.length} pattern(s) to the light?\n\nThis is the only action that writes to the light, and it REPLACES the light's entire store — there's no read-back, so whatever is on the light now is overwritten.\n\nYour local library and "Backup .bin" are not affected.`))return;
-  try{await pushFile(buildStoreFile());synced=true;renderStore();log('store matches the light — "Show" enabled','#9f9');}catch(e){log('error '+e,'#f99');}};
+  if(!confirm(`Push ${store.length} pattern(s) to the light?\n\nThis is the only action that writes to the light, and it REPLACES the light's entire store, there's no read-back, so whatever is on the light now is overwritten.\n\nYour local library and "Backup .bin" are not affected.`))return;
+  try{await pushFile(buildStoreFile());synced=true;renderStore();log('store matches the light, "Show" enabled','#9f9');}catch(e){log('error '+e,'#f99');}};
 $('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buildStoreFile()]));a.download='light_mode.bin';a.click();};
 $('#importBin').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=new Uint8Array(await f.arrayBuffer());
   store=codec.parseFile(buf).records.map(r=>{const ty=r[4];
@@ -515,8 +522,8 @@ $('#connect').onclick=()=>connect().catch(e=>log('error: '+e,'#f99'));
 $('#applySettings').onclick=applySettings;$('#brake').onclick=()=>{cur.brake^=1;paintSettings();};$('#sleep').onclick=()=>{cur.sleep^=1;paintSettings();};
 renderStore();loadPacks();$('#effect').onchange();
 if(!navigator.bluetooth){$('#nobt').classList.remove('hidden');const c=$('#connect');c.disabled=true;c.title='This browser has no Web Bluetooth support';
-  log('Web Bluetooth unavailable — use Chrome/Edge desktop or Android. You can still design/export patterns.','#f99');}
-else log('ready — Connect a light, or "+ Create new" to build a pattern.');
+  log('Web Bluetooth unavailable, use Chrome/Edge desktop or Android. You can still design/export patterns.','#f99');}
+else log('ready, Connect a light, or "+ Create new" to build a pattern.');
 </script>
 </body>
 </html>
