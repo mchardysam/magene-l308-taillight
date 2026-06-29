@@ -146,6 +146,7 @@
     <div id="edText" class="hidden">
       <div class="row"><input type="text" id="scrollText" placeholder="message…" style="width:200px">
         <label>Font</label><select id="textFont">
+          <option value='pixel'>Pixel</option>
           <option value='"DejaVu Sans Mono","Menlo","Courier New",monospace'>Mono</option>
           <option value='system-ui,"Segoe UI",Roboto,sans-serif'>Sans</option>
           <option value='"Arial Narrow","Roboto Condensed",sans-serif'>Condensed</option>
@@ -157,7 +158,7 @@
         </select>
         <label>Speed</label><input type="range" id="scrollSpeed" min="1" max="60" value="30"><span id="scrollSpeedV" class="muted">30</span></div>
       <canvas id="scrollCanvas" width="660" height="66" style="margin-top:10px;width:100%;background:#05070f;border-radius:8px;image-rendering:pixelated"></canvas>
-      <p class="muted">Each character is rasterised from the chosen font into the 10×10 grid and scrolled by the light. Tiny grid — Mono/Condensed read best. No brightness field for text (verify on hardware).</p>
+      <p class="muted"><b>Pixel</b> is a built-in 5×7 dot-matrix font (uppercase) — crispest on the grid. The rest are rasterised from system fonts; Mono/Condensed read best. No brightness field for text (verify on hardware).</p>
     </div>
   </dialog>
 
@@ -239,8 +240,69 @@ $('#gifFps').oninput=()=>$('#gifFpsV').textContent=$('#gifFps').value+' fps';
 // Supersample 8× then downsample by coverage so small glyphs stay crisp (not blobby),
 // auto-fit to ~8 rows tall and centre — matching how the device lays out its own font.
 const CORNER=new Set([0,9,90,99]);
+// Built-in 5×7 dot-matrix "Pixel" font — rendered straight to the grid (no font file,
+// no antialiasing) for a razor-crisp LED look. Uppercase-only by design (classic LED-sign
+// style); lowercase maps up, unknown chars fall back to "?".
+const PX_FONT={
+ ' ':['.....','.....','.....','.....','.....','.....','.....'],
+ 'A':['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
+ 'B':['####.','#...#','#...#','####.','#...#','#...#','####.'],
+ 'C':['.###.','#...#','#....','#....','#....','#...#','.###.'],
+ 'D':['###..','#..#.','#...#','#...#','#...#','#..#.','###..'],
+ 'E':['#####','#....','#....','###..','#....','#....','#####'],
+ 'F':['#####','#....','#....','###..','#....','#....','#....'],
+ 'G':['.###.','#...#','#....','#.###','#...#','#...#','.###.'],
+ 'H':['#...#','#...#','#...#','#####','#...#','#...#','#...#'],
+ 'I':['.###.','..#..','..#..','..#..','..#..','..#..','.###.'],
+ 'J':['..###','...#.','...#.','...#.','#..#.','#..#.','.##..'],
+ 'K':['#...#','#..#.','#.#..','##...','#.#..','#..#.','#...#'],
+ 'L':['#....','#....','#....','#....','#....','#....','#####'],
+ 'M':['#...#','##.##','#.#.#','#.#.#','#...#','#...#','#...#'],
+ 'N':['#...#','##..#','#.#.#','#.#.#','#..##','#...#','#...#'],
+ 'O':['.###.','#...#','#...#','#...#','#...#','#...#','.###.'],
+ 'P':['####.','#...#','#...#','####.','#....','#....','#....'],
+ 'Q':['.###.','#...#','#...#','#...#','#.#.#','#..#.','.##.#'],
+ 'R':['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
+ 'S':['.####','#....','#....','.###.','....#','....#','####.'],
+ 'T':['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
+ 'U':['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
+ 'V':['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
+ 'W':['#...#','#...#','#...#','#.#.#','#.#.#','##.##','#...#'],
+ 'X':['#...#','#...#','.#.#.','..#..','.#.#.','#...#','#...#'],
+ 'Y':['#...#','#...#','.#.#.','..#..','..#..','..#..','..#..'],
+ 'Z':['#####','....#','...#.','..#..','.#...','#....','#####'],
+ '0':['.###.','#...#','#..##','#.#.#','##..#','#...#','.###.'],
+ '1':['..#..','.##..','..#..','..#..','..#..','..#..','.###.'],
+ '2':['.###.','#...#','....#','...#.','..#..','.#...','#####'],
+ '3':['#####','...#.','..#..','...#.','....#','#...#','.###.'],
+ '4':['...#.','..##.','.#.#.','#..#.','#####','...#.','...#.'],
+ '5':['#####','#....','####.','....#','....#','#...#','.###.'],
+ '6':['.###.','#....','#....','####.','#...#','#...#','.###.'],
+ '7':['#####','....#','...#.','..#..','.#...','.#...','.#...'],
+ '8':['.###.','#...#','#...#','.###.','#...#','#...#','.###.'],
+ '9':['.###.','#...#','#...#','.####','....#','....#','.###.'],
+ '.':['.....','.....','.....','.....','.....','.##..','.##..'],
+ ',':['.....','.....','.....','.....','.##..','.##..','.#...'],
+ '!':['..#..','..#..','..#..','..#..','..#..','.....','..#..'],
+ '?':['.###.','#...#','....#','..##.','..#..','.....','..#..'],
+ "'":['..#..','..#..','.#...','.....','.....','.....','.....'],
+ '"':['.#.#.','.#.#.','.#.#.','.....','.....','.....','.....'],
+ ':':['.....','.##..','.##..','.....','.##..','.##..','.....'],
+ ';':['.....','.##..','.##..','.....','.##..','.##..','.#...'],
+ '-':['.....','.....','.....','#####','.....','.....','.....'],
+ '+':['.....','..#..','..#..','#####','..#..','..#..','.....'],
+ '/':['....#','....#','...#.','..#..','.#...','#....','#....'],
+ '&':['.##..','#..#.','#.#..','.#...','#.#.#','#..#.','.##.#'],
+ '(':['..##.','.#...','.#...','.#...','.#...','.#...','..##.'],
+ ')':['.##..','...#.','...#.','...#.','...#.','...#.','.##..'],
+ '#':['.#.#.','.#.#.','#####','.#.#.','#####','.#.#.','.#.#.']
+};
+function pixelGlyph(ch){const g=PX_FONT[ch]||PX_FONT[(''+ch).toUpperCase()]||PX_FONT['?'];
+  const leds=[];for(let r=0;r<7;r++)for(let c=0;c<5;c++)if(g[r][c]==='#')leds.push((r+1)*N+(c+2));  // 7 rows from row1, 5 cols from col2
+  return leds;}
 function glyph(ch,font){
   font=font||($('#textFont')&&$('#textFont').value)||'monospace';ch=(ch==null?' ':''+ch)||' ';
+  if(font==='pixel')return pixelGlyph(ch);
   const S=8,D=N*S,oc=document.createElement('canvas');oc.width=D;oc.height=D;const x=oc.getContext('2d');
   x.fillStyle='#000';x.fillRect(0,0,D,D);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='alphabetic';
   let size=8*S;x.font=`bold ${size}px ${font}`;let m=x.measureText(ch);
