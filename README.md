@@ -51,5 +51,10 @@ Derived by observing our own hardware; the `web/` and `garmin/` clients both imp
 - The light has **no pattern read-back**: an upload replaces the whole store with no undo, so
   keep `.bin` backups (the web app's library is your source of truth).
 
+## Support
+This is a free, unofficial side project. If it saved you some time, you can
+[sponsor development](https://github.com/sponsors/mchardysam) — entirely optional, and
+the tools stay free either way.
+
 ## License
 Code: **MIT** (`LICENSE`). Protocol spec: **CC-BY-4.0** (`spec/LICENSE`).

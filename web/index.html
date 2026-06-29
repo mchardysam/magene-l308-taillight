@@ -138,10 +138,17 @@
 
     <!-- text editor -->
     <div id="edText" class="hidden">
-      <div class="row"><input type="text" id="scrollText" placeholder="message…" style="width:260px">
+      <div class="row"><input type="text" id="scrollText" placeholder="message…" style="width:200px">
+        <label>Font</label><select id="textFont">
+          <option value='"DejaVu Sans Mono","Menlo","Courier New",monospace'>Mono</option>
+          <option value='system-ui,"Segoe UI",Roboto,sans-serif'>Sans</option>
+          <option value='"Arial Narrow","Roboto Condensed",sans-serif'>Condensed</option>
+          <option value='Georgia,"Times New Roman",serif'>Serif</option>
+          <option value='"Comic Sans MS","Comic Neue",system-ui'>Rounded</option>
+        </select>
         <label>Speed</label><input type="range" id="scrollSpeed" min="1" max="60" value="30"><span id="scrollSpeedV" class="muted">30</span></div>
       <canvas id="scrollCanvas" width="660" height="66" style="margin-top:10px;width:100%;background:#05070f;border-radius:8px;image-rendering:pixelated"></canvas>
-      <p class="muted">Crisp font (one glyph per char, scrolled natively by the light). No brightness field for text (verify on hardware).</p>
+      <p class="muted">Each character is rasterised from the chosen font into the 10×10 grid and scrolled by the light. Tiny grid — Mono/Condensed read best. No brightness field for text (verify on hardware).</p>
     </div>
   </dialog>
 
@@ -215,13 +222,29 @@ function invertAll(s){for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(codec.isCorner
 $('#effect').onchange=()=>{const t=$('#effect').value;show('#timedRow',t!=='solid');show('#brightRow',t==='solid');$('#intLabel').textContent=t==='pulsing'?'Pulse interval':'Flash interval';};
 $('#bright').oninput=()=>$('#brightV').textContent=$('#bright').value+'%';
 $('#scrollSpeed').oninput=()=>$('#scrollSpeedV').textContent=$('#scrollSpeed').value;
+$('#textFont').onchange=previewScroll;
 $('#gifFps').oninput=()=>$('#gifFpsV').textContent=$('#gifFps').value+' fps';
 
 /* ---- glyph font + image import ---- */
-function glyph(ch){const oc=document.createElement('canvas');oc.width=N;oc.height=N;const x=oc.getContext('2d');
-  x.fillStyle='#000';x.fillRect(0,0,N,N);x.fillStyle='#fff';x.font='bold 9px "DejaVu Sans Mono","Menlo","Courier New",monospace';
-  x.textAlign='center';x.textBaseline='middle';x.fillText(ch,N/2,N/2+0.5);return codec.imageToLeds(x.getImageData(0,0,N,N).data,N,N,90);}
-const textFrames=t=>[...(t||' ')].slice(0,codec.MAX_FRAMES).map(glyph);
+// Rasterise one character into the 10×10 grid using ANY chosen font family.
+// Supersample 8× then downsample by coverage so small glyphs stay crisp (not blobby),
+// auto-fit to ~8 rows tall and centre — matching how the device lays out its own font.
+const CORNER=new Set([0,9,90,99]);
+function glyph(ch,font){
+  font=font||($('#textFont')&&$('#textFont').value)||'monospace';ch=(ch==null?' ':''+ch)||' ';
+  const S=8,D=N*S,oc=document.createElement('canvas');oc.width=D;oc.height=D;const x=oc.getContext('2d');
+  x.fillStyle='#000';x.fillRect(0,0,D,D);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='alphabetic';
+  let size=8*S;x.font=`bold ${size}px ${font}`;let m=x.measureText(ch);
+  const ink=(m.actualBoundingBoxAscent||size*0.7)+(m.actualBoundingBoxDescent||0);
+  if(ink>0){size=Math.max(4,Math.round(size*(8*S)/ink));x.font=`bold ${size}px ${font}`;m=x.measureText(ch);}
+  const asc=m.actualBoundingBoxAscent||size*0.7,desc=m.actualBoundingBoxDescent||0;
+  x.fillText(ch,D/2,(D+asc-desc)/2);                          // vertically centre the ink box
+  const img=x.getImageData(0,0,D,D).data,leds=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const L=r*N+c;if(CORNER.has(L))continue;
+    let on=0;for(let yy=0;yy<S;yy++)for(let xx=0;xx<S;xx++)if(img[(((r*S+yy)*D)+(c*S+xx))*4]>110)on++;
+    if(on>=S*S*0.4)leds.push(L);}                             // ≥40% pixel coverage = lit
+  return leds;}
+const textFrames=(t,font)=>[...(t||' ')].slice(0,codec.MAX_FRAMES).map(ch=>glyph(ch,font));
 $('#rasterize').onclick=()=>{lit.clear();glyph(($('#toPix').value||' ')[0]).forEach(L=>lit.add(L));drawGrid();};
 $('#img').onchange=async e=>{const f=e.target.files[0];if(!f)return;const bmp=await createImageBitmap(f);
   const oc=document.createElement('canvas');oc.width=N;oc.height=N;oc.getContext('2d').drawImage(bmp,0,0,N,N);
@@ -232,10 +255,10 @@ let store=JSON.parse(localStorage.getItem('l308store')||'[]'),editing=null,gifFr
 const stopListAnim=()=>{if(listAnim){clearInterval(listAnim.id);listAnim.reset();listAnim=null;}};
 const saveStore=()=>{localStorage.setItem('l308store',JSON.stringify(store));synced=false;};
 const pctToByte=p=>Math.max(1,Math.min(18,Math.round(p*0.175)));   // measured: byte ∝ %, 100%→0x12
-function previewLeds(e){return e.type==='gif'?(e.frames[0]||[]):e.type==='text'?glyph(((e.text||' ')[0]||' ')):(e.leds||[]);}
+function previewLeds(e){return e.type==='gif'?(e.frames[0]||[]):e.type==='text'?glyph(((e.text||' ')[0]||' '),e.font):(e.leds||[]);}
 function recordFromEntry(e,id){
   if(e.type==='gif')return codec.framesRecord(id,0x02,e.frames,e.fps);
-  if(e.type==='text')return codec.framesRecord(id,0x04,textFrames(e.text),e.speed);
+  if(e.type==='text')return codec.framesRecord(id,0x04,textFrames(e.text,e.font),e.speed);
   if(e.type==='solid')return codec.solidRecord(id,e.leds,pctToByte(e.bright));
   return codec.timedRecord(id,e.leds,{pulsing:e.type==='pulsing',intervalSec:e.interval,minPct:e.min,maxPct:e.max});}
 // thumbnail + hover-to-play + ▶ persistent toggle (one animation at a time, page-wide)
@@ -244,7 +267,7 @@ function thumb(itemEl,canvas,e){
   const paint=leds=>{x.fillStyle='#05070f';x.fillRect(0,0,N,N);x.fillStyle='#ff3b3b';(leds||[]).forEach(L=>x.fillRect(L%N,(L/N)|0,1,1));};
   paint(previewLeds(e));
   if(e.type!=='gif'&&e.type!=='text')return null;
-  const fr=e.type==='gif'?e.frames:textFrames(e.text),fps=e.type==='gif'?(e.fps||10):4;
+  const fr=e.type==='gif'?e.frames:textFrames(e.text,e.font),fps=e.type==='gif'?(e.fps||10):4;
   const go=(persist,btn)=>{stopListAnim();let k=0;const id=setInterval(()=>paint(fr[k++%fr.length]||[]),1000/Math.max(1,fps));
     if(btn)btn.textContent='■';listAnim={id,persist,item:itemEl,reset:()=>{paint(previewLeds(e));if(btn)btn.textContent='▶';}};};
   itemEl.addEventListener('mouseenter',()=>{if(!(listAnim&&listAnim.persist))go(false,null);});
@@ -303,15 +326,15 @@ addEventListener('keydown',e=>{   // arrow keys step frames while the GIF editor
 
 /* ---- scrolling text preview ---- */
 let scrollAnim=null;
-function previewScroll(){const frames=textFrames($('#scrollText').value||' '),cols=[];
+function previewScroll(){const frames=textFrames($('#scrollText').value||' ',$('#textFont').value),cols=[];
   frames.forEach(leds=>{const g=new Set(leds);let lo=N,hi=-1;
     for(let c=0;c<N;c++)for(let r=0;r<N;r++)if(g.has(r*N+c)){lo=Math.min(lo,c);hi=Math.max(hi,c);}
     if(hi<0){cols.push(null,null);return;}for(let c=lo;c<=hi;c++){const col=[];for(let r=0;r<N;r++)if(g.has(r*N+c))col.push(r);cols.push(col);}cols.push(null);});
-  const cv=$('#scrollCanvas'),x=cv.getContext('2d'),cw=cv.width/N,ch=cv.height/N;
+  const cv=$('#scrollCanvas'),x=cv.getContext('2d'),px=cv.height/N,vis=Math.floor(cv.width/px);  // square pixels: cell = one row tall
   if(scrollAnim)cancelAnimationFrame(scrollAnim);if(!cols.length){x.clearRect(0,0,cv.width,cv.height);return;}
   let off=0;const spd=+$('#scrollSpeed').value;
   (function f(){x.fillStyle='#05070f';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#ff3b3b';
-    for(let v=0;v<N;v++){const col=cols[(((Math.floor(off)+v)%cols.length)+cols.length)%cols.length];if(col)col.forEach(r=>x.fillRect(v*cw,r*ch,cw-1,ch-1));}
+    for(let v=0;v<vis;v++){const col=cols[(((Math.floor(off)+v)%cols.length)+cols.length)%cols.length];if(col)col.forEach(r=>x.fillRect(v*px,r*px,px-1,px-1));}
     off+=spd/120;scrollAnim=requestAnimationFrame(f);})();}
 $('#scrollText').oninput=previewScroll;
 
@@ -334,12 +357,13 @@ function openEditor(kind,idx){   // kind: 'pattern'|'gif'|'text' OR an effect ty
     $('#interval').value=e?.interval??2;$('#minp').value=e?.min??20;$('#maxp').value=e?.max??80;drawGrid();}
   if(kind==='gif'){gifFrames=e?e.frames.map(f=>[...f]):[];gifActive=0;gifLit.clear();
     $('#gifFps').value=e?.fps??10;$('#gifFpsV').textContent=$('#gifFps').value+' fps';renderGifFrames();if(gifFrames.length)loadFrame(0);else drawGif();}
-  if(kind==='text'){$('#scrollText').value=e?.text||'';$('#scrollSpeed').value=e?.speed??30;$('#scrollSpeedV').textContent=$('#scrollSpeed').value;previewScroll();}
+  if(kind==='text'){$('#scrollText').value=e?.text||'';$('#scrollSpeed').value=e?.speed??30;$('#scrollSpeedV').textContent=$('#scrollSpeed').value;
+    if(e?.font){const o=[...$('#textFont').options].find(o=>o.value===e.font);$('#textFont').value=o?e.font:$('#textFont').options[0].value;}previewScroll();}
   $('#editorCard').dataset.kind=kind;
 }
 $('#edSave').onclick=()=>{const kind=$('#editorCard').dataset.kind;let entry;
   if(kind==='gif'){if(gifFrames.length<2){log('need ≥2 frames','#fc9');return;}entry={type:'gif',frames:gifFrames.map(f=>[...f]),fps:+$('#gifFps').value||10};}
-  else if(kind==='text'){const t=$('#scrollText').value||'';if(!t){log('enter text','#fc9');return;}entry={type:'text',text:t,speed:+$('#scrollSpeed').value};}
+  else if(kind==='text'){const t=$('#scrollText').value||'';if(!t){log('enter text','#fc9');return;}entry={type:'text',text:t,speed:+$('#scrollSpeed').value,font:$('#textFont').value};}
   else{entry={leds:[...lit],type:$('#effect').value,bright:+$('#bright').value,interval:+$('#interval').value,min:+$('#minp').value,max:+$('#maxp').value};}
   if(editing!=null)store[editing]=entry;else store.push(entry);
   saveStore();renderStore();closeDlg('#editorCard');if(gAnim){clearInterval(gAnim);gAnim=null;}
@@ -349,7 +373,7 @@ $('#edSave').onclick=()=>{const kind=$('#editorCard').dataset.kind;let entry;
 const byteToPct=b=>Math.max(0,Math.min(100,Math.round(b/0.175)));   // inverse of pctToByte
 function packToEntry(p){
   if(p.effect==='animation')return{type:'gif',frames:p.frames,fps:p.param||10,label:p.label||p.name||''};
-  if(p.effect==='text')return{type:'text',text:p.text||'',speed:p.param||30,label:p.label||''};
+  if(p.effect==='text')return{type:'text',text:p.text||'',speed:p.param||30,font:p.font,label:p.label||''};
   if(p.effect==='flashing'||p.effect==='pulsing')return{type:p.effect,leds:p.leds||[],min:p.minPct??20,max:p.maxPct??80,interval:p.intervalSec||2,label:p.label||p.name||''};
   return{type:'solid',leds:p.leds||[],bright:byteToPct(p.brightness??18),label:p.name||p.label||''};}
 let packs={default:[],community:[],imported:[]},libTab='default';
