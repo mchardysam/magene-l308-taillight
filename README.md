@@ -23,6 +23,18 @@ pixel art, multi-frame animations, and scrolling text**, and it has an accelerom
 what sets it apart from just about every other taillight — and it's exactly what makes a proper
 control tool worthwhile.
 
+**Specs at a glance** *(per Magene's published figures — verify current details before buying):*
+
+| Spec | Detail |
+|---|---|
+| **Display** | 96 COB LEDs in a 10×10 matrix — fully drawable (pixel art, animations, scrolling text) |
+| **Brightness** | up to ~30 lumens, claimed visible to ~800 m |
+| **Brake alert** | accelerometer detects braking → ~3 s high-intensity flash |
+| **Auto sleep/wake** | motion-sensing; sleeps after 1–10 min idle (configurable), wakes on movement |
+| **Battery** | USB rechargeable; up to ~50 h (≈10 h with rich animations), ~80% in ~1.5 h |
+| **Build** | 23 g, IPX6 water-resistant |
+| **Mounts** | seatpost and saddle-rail versions |
+
 ## Why this exists
 1. **Better, simpler control.** All that programmability is buried deep in the OnelapFit app.
    I wanted to draw a pattern, set the brightness, and push it to the light in a few seconds
