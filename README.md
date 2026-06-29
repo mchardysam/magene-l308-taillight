@@ -52,9 +52,10 @@ exists:
 2. **Region-locked units.** Some L308s are region-locked *in the app* even though the lock
    isn't enforced on the device. These tools talk to the light directly, so if you own the
    hardware you can use it regardless.
-3. **Control from other devices.** The Magene head unit can drive the light, and I wanted that
-   same control from a Garmin and from a plain web page. Talking to the light directly makes
-   that possible, and a Garmin Connect IQ app is in the works.
+3. **Control from other devices.** The Magene C606 head unit has a widget that changes the
+   light's pattern while you ride, and I wanted that same on-the-bike control from a Garmin.
+   Talking to the light directly makes that possible: a Garmin Connect IQ app that does just this
+   is in the works, and the web app covers the same ground from a browser.
 
 It's interoperability for hardware you own, nothing more. Not affiliated with Magene; if they'd
 like something changed, I'm happy to hear from them.
@@ -63,12 +64,16 @@ like something changed, I'm happy to hear from them.
 I've run an L308 on my own bikes for nearly three years. It's genuinely bright and the battery
 lasts ages between charges. Being able to dial the brightness down is great for group rides, so
 I'm not blinding the riders behind me, and the custom designs I push to it always get a reaction.
-I liked it enough to buy a few so I'm not constantly swapping one light between bikes. Best of
+I liked it enough that I now have three, so I'm not constantly swapping one light between bikes. Best of
 all it auto-sleeps and wakes on movement, so I never have to remember to turn it on or off.
 
-👉 **[Buy the Magene L308 on AliExpress](https://s.click.aliexpress.com/e/_c36z7cWV)**
+I bought my first L308 together with a [Magene C606 head unit](https://s.click.aliexpress.com/e/_c3W6ppEZ), and I have ended up loving that
+one too. The battery life easily covers multi-day bikepacking trips, and there is plenty to
+customise on it.
 
-*Affiliate link. I may earn a small commission at no extra cost to you. Unofficial, not
+👉 **[Buy the Magene L308 on AliExpress](https://s.click.aliexpress.com/e/_c3JsQmHj)**
+
+*Affiliate links. I may earn a small commission at no extra cost to you. Unofficial, not
 affiliated with Magene.*
 
 ## What's here
@@ -99,6 +104,18 @@ cd web && python3 -m http.server 8753
 Open `http://localhost:8753` in Chrome/Edge and click **Connect light**. Or push `web/` to a
 GitHub Pages site, where the `https://` URL satisfies Web Bluetooth's secure-context requirement.
 (Web Bluetooth works on Chrome/Edge desktop and Android, but not iOS Safari.)
+
+## Backups and the OnelapFit cloud
+One thing worth understanding before you start. The official OnelapFit app stores your patterns
+in its cloud and pushes them down to the light, so the cloud is what it treats as the truth. The
+light has no read-back of its own, there is no way to pull the patterns back off it.
+
+Because these tools write to the light directly, the light and the OnelapFit cloud drift apart.
+The cloud still thinks the light holds whatever it last pushed, and if you open the official app
+again it may overwrite what you loaded with its own copy. So your patterns only live in the
+places you control: the web app's library, and any "Backup .bin" file you save. If you want to
+keep a set or move it to another light, export the .bin first, because the light cannot hand it
+back.
 
 ## Protocol
 Fully documented in **[`spec/L308-ble-protocol.md`](spec/L308-ble-protocol.md)**: GATT map,
