@@ -1,0 +1,17 @@
+# Local-only working files (kept out of the public repo). Opaque on purpose.
+private/
+
+# Local community pattern pack the web app optionally loads (it handles absence gracefully).
+web/community_patterns/
+
+# Build keys (also covered by garmin/.gitignore)
+garmin/developer_key
+garmin/developer_key.pem
+
+# env / build / local
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.claude/
+.DS_Store

@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L308 Manager</title>
+<style>
+  :root{--bg:#0f1220;--card:#1a1f33;--ink:#e8ecf5;--mut:#9aa3c0;--accent:#4f8cff;--ok:#36d399;--err:#f76b6b;}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{padding:14px 18px;background:#12152470;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px);border-bottom:1px solid #2a3150}
+  h1{font-size:18px;margin:0}.sub{color:var(--mut);font-size:12px}
+  main{max-width:880px;margin:0 auto;padding:18px;display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid #2a3150;border-radius:12px;padding:16px}
+  .card h2,dialog h2{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);display:flex;justify-content:space-between;align-items:center}
+  dialog{background:var(--card);color:var(--ink);border:1px solid #2a3150;border-radius:12px;padding:16px;max-width:760px;width:calc(100% - 32px);max-height:calc(100dvh - 32px);overflow:auto}
+  dialog::backdrop{background:#000a;backdrop-filter:blur(3px)}
+  #grid,#gifGrid{max-width:100%;height:auto}
+  @media(max-width:600px){dialog{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border:none;border-radius:0}}
+  button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 13px;font-size:14px;cursor:pointer}
+  button.ghost{background:#26304f}button.sm{padding:4px 9px;font-size:12px}button:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  label{color:var(--mut);font-size:13px}
+  input[type=number]{width:70px}input[type=text]{width:200px}
+  input,select{background:#0d1020;border:1px solid #2a3150;color:var(--ink);border-radius:6px;padding:6px 8px}
+  .pill{padding:3px 9px;border-radius:999px;font-size:12px}.on{background:#143a2b;color:var(--ok)}.off{background:#3a2a2a;color:var(--mut)}
+  .store{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .item{background:#10152a;border:1px solid #2a3150;border-radius:8px;padding:8px}
+  .item.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .item.playing{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+  .item canvas{width:100%;image-rendering:pixelated;background:#05070f;border-radius:5px;aspect-ratio:1}
+  .item .t{font-size:11px;color:var(--mut);margin:4px 0;display:flex;justify-content:space-between}
+  .chooser{display:flex;gap:10px;flex-wrap:wrap}
+  .choice{flex:1;min-width:140px;background:#10152a;border:1px solid #2a3150;border-radius:10px;padding:16px;text-align:center;cursor:pointer}
+  .choice:hover{border-color:var(--accent)}.choice .ic{font-size:26px}.choice .nm{margin-top:6px;font-weight:600}.choice .ds{font-size:11px;color:var(--mut)}
+  #grid{touch-action:none;background:#05070f;border-radius:10px;cursor:crosshair}
+  .edWrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}.controls{flex:1;min-width:240px;display:grid;gap:10px}
+  #log{font:12px/1.5 ui-monospace,monospace;background:#0a0d18;border-radius:8px;padding:10px;height:130px;overflow:auto;white-space:pre-wrap}
+  .muted{color:var(--mut);font-size:12px}.danger{color:var(--err)}.hidden{display:none}
+</style>
+</head>
+<body>
+<header><h1>L308 Manager <span class="sub">· unofficial · works on region-locked units</span></h1></header>
+<main>
+  <!-- connection + settings -->
+  <div class="card"><div class="row">
+    <button id="connect">Connect light</button>
+    <span id="status" class="pill off">disconnected</span>
+    <span id="batt" class="muted"></span>
+    <span style="flex:1"></span>
+    <span class="muted">Brake</span><button class="ghost switch" id="brake" disabled>—</button>
+    <span class="muted">Sleep</span><button class="ghost switch" id="sleep" disabled>—</button>
+    <select id="timeout" disabled>
+      <option value="30">30s</option><option value="60">1m</option><option value="120">2m</option>
+      <option value="180">3m</option><option value="300">5m</option><option value="600">10m</option>
+      <option value="900">15m</option><option value="1800">30m</option>
+    </select>
+    <button id="applySettings" disabled>Apply</button>
+  </div></div>
+
+  <!-- pattern library -->
+  <div class="card">
+    <h2>My patterns <span class="muted" id="storeCount"></span></h2>
+    <div class="store" id="store"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="addNew">+ Create new</button>
+      <span style="flex:1"></span>
+      <button id="push" disabled>Push to light</button>
+      <button class="ghost" id="export">Backup .bin</button>
+      <label class="ghost" style="padding:8px 13px;border-radius:8px;cursor:pointer;background:#26304f">Restore .bin<input type="file" id="importBin" accept=".bin" hidden></label>
+    </div>
+    <p class="muted danger" id="pushWarn">"Push to light" is the only action that writes to the light — it replaces the whole store (no read-back, so keep .bin backups). Enabled only when your set differs from what's on the light.</p>
+  </div>
+
+  <!-- library (defaults + community + import) -->
+  <div class="card">
+    <h2>Library <span class="muted" id="libCount"></span></h2>
+    <div class="row" style="margin-bottom:10px">
+      <button class="ghost sm libtab" data-src="default">Defaults</button>
+      <button class="ghost sm libtab" data-src="community">Community</button>
+      <span style="flex:1"></span>
+      <label class="ghost sm" style="background:#26304f;padding:5px 9px;border-radius:8px;cursor:pointer">Import pack…<input type="file" id="importPack" accept=".json" hidden></label>
+    </div>
+    <div class="store" id="library"></div>
+    <p class="muted" id="libNote"></p>
+  </div>
+
+  <!-- type chooser (Create new) -->
+  <dialog id="chooserCard">
+    <h2>Create new — pick a type <button class="ghost sm" id="chooserCancel">Cancel</button></h2>
+    <div class="chooser">
+      <div class="choice" data-new="pattern"><div class="ic">▦</div><div class="nm">Pattern</div><div class="ds">draw pixels · solid / flashing / pulsing</div></div>
+      <div class="choice" data-new="gif"><div class="ic">🎞</div><div class="nm">GIF</div><div class="ds">multi-frame animation (≤10)</div></div>
+      <div class="choice" data-new="text"><div class="ic">A</div><div class="nm">Scrolling text</div><div class="ds">crisp font, native scroll</div></div>
+    </div>
+  </dialog>
+
+  <!-- editor (create + edit) -->
+  <dialog id="editorCard">
+    <h2><span id="edTitle">Editor</span>
+      <span><button id="edSave">Save</button> <button class="ghost sm" id="edCancel">Cancel</button></span></h2>
+
+    <!-- pattern editor -->
+    <div id="edPattern" class="edWrap">
+      <canvas id="grid" width="330" height="330"></canvas>
+      <div class="controls">
+        <div class="row"><label>Effect</label>
+          <select id="effect"><option value="solid">Solid</option><option value="flashing">Flashing</option><option value="pulsing">Pulsing</option></select>
+          <button class="ghost sm" id="clear">Clear</button><button class="ghost sm" id="fill">Fill</button><button class="ghost sm" id="invert">Invert</button>
+        </div>
+        <div class="row" id="brightRow"><label>Brightness</label><input type="range" id="bright" min="0" max="100" value="60"><span id="brightV" class="muted">60%</span></div>
+        <div class="row hidden" id="timedRow">
+          <label id="intLabel">Flash interval</label><input type="number" id="interval" min="1" max="20" value="2"><span class="muted">s</span>
+          <label style="margin-left:8px">Range</label><input type="number" id="minp" min="0" max="100" value="20"><span class="muted">–</span><input type="number" id="maxp" min="0" max="100" value="80"><span class="muted">%</span>
+        </div>
+        <div class="row">
+          <input type="text" id="toPix" placeholder="text/char → pixels"><button class="ghost sm" id="rasterize">Fill grid</button>
+          <label class="ghost sm" style="background:#26304f;padding:5px 9px;border-radius:8px;cursor:pointer">Image…<input type="file" id="img" accept="image/*" hidden></label>
+        </div>
+        <p class="muted">Click/drag to toggle LEDs. Corners disabled (10×10 − 4 = 96 LEDs).</p>
+      </div>
+    </div>
+
+    <!-- gif editor -->
+    <div id="edGif" class="hidden">
+      <div class="edWrap">
+        <canvas id="gifGrid" width="330" height="330"></canvas>
+        <div class="controls">
+          <div class="row"><button class="ghost sm" id="gClear">Clear</button><button class="ghost sm" id="gFill">Fill</button>
+            <button class="ghost sm" id="gAddFrame">Add frame</button>
+            <label>Speed</label><input type="range" id="gifFps" min="1" max="30" value="10"><span id="gifFpsV" class="muted">10 fps</span></div>
+          <div class="row"><button class="ghost sm" id="gPlay">Preview ▶</button><span class="muted" id="gifCount"></span></div>
+          <div class="store" id="gifFrames"></div>
+          <p class="muted">Draw on the grid, "Add frame" to append (≤10). Click a frame to re-edit it. No per-frame brightness (1-bit on/off).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- text editor -->
+    <div id="edText" class="hidden">
+      <div class="row"><input type="text" id="scrollText" placeholder="message…" style="width:260px">
+        <label>Speed</label><input type="range" id="scrollSpeed" min="1" max="60" value="30"><span id="scrollSpeedV" class="muted">30</span></div>
+      <canvas id="scrollCanvas" width="660" height="66" style="margin-top:10px;width:100%;background:#05070f;border-radius:8px;image-rendering:pixelated"></canvas>
+      <p class="muted">Crisp font (one glyph per char, scrolled natively by the light). No brightness field for text (verify on hardware).</p>
+    </div>
+  </dialog>
+
+  <div class="card"><h2>Log</h2><div id="log"></div></div>
+</main>
+
+<script type="module">
+import * as codec from './codec.js';
+const SVC='8ce5cc01-0a4d-11e9-ab14-d663bd873d93',CMD='8ce5cc05-0a4d-11e9-ab14-d663bd873d93',DATA='8ce5cc06-0a4d-11e9-ab14-d663bd873d93';
+const HS=Uint8Array.from([0x80,0xf1,1,1,0,0,0,0,0,0,0,0,0]);
+const $=s=>document.querySelector(s),N=10,CELL=33;
+const log=(m,c)=>{const d=$('#log');d.innerHTML+=`<span style="color:${c||'#9fb'}">[${new Date().toLocaleTimeString()}] ${m}</span>\n`;d.scrollTop=d.scrollHeight;};
+const hexs=u=>[...u].map(b=>b.toString(16).padStart(2,'0')).join('');
+const show=(el,on)=>$(el).classList.toggle('hidden',!on);
+const openDlg=s=>{const d=$(s);if(d&&!d.open)d.showModal();};
+const closeDlg=s=>{const d=$(s);if(d&&d.open)d.close();};
+
+/* ---- BLE ---- */
+let dev,cmdCh,dataCh,notifyRes=null;
+const onNotify=e=>{const v=new Uint8Array(e.target.value.buffer);log('&larr; '+hexs(v),'#7ad');if(notifyRes){notifyRes(v);notifyRes=null;}};
+const nextNotify=(ms=2500)=>new Promise(r=>{notifyRes=r;setTimeout(()=>r(null),ms);});
+const wCmd=u=>cmdCh.writeValueWithoutResponse(u),wData=u=>dataCh.writeValueWithoutResponse(u);
+async function connect(){
+  dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'L308'}],optionalServices:[SVC]});
+  dev.addEventListener('gattserverdisconnected',()=>setConn(false));
+  const g=await dev.gatt.connect(),s=await g.getPrimaryService(SVC);
+  cmdCh=await s.getCharacteristic(CMD);dataCh=await s.getCharacteristic(DATA);
+  await cmdCh.startNotifications();cmdCh.addEventListener('characteristicvaluechanged',onNotify);
+  setConn(true);log('connected to '+dev.name,'#9f9');await wCmd(HS);await nextNotify();await readSettings();
+}
+function setConn(on){
+  $('#status').textContent=on?(dev?.name||'connected'):'disconnected';$('#status').className='pill '+(on?'on':'off');
+  $('#connect').textContent=on?'Reconnect':'Connect light';
+  for(const id of ['brake','sleep','timeout','applySettings']) $('#'+id).disabled=!on;
+  synced=false; $('#push').disabled=!on||store.length===0; renderStore(); if(!on)log('disconnected','#f99');
+}
+let cur={brake:0,sleep:0,timeout:300};
+async function readSettings(){await wCmd(Uint8Array.from([0x94,0xf1,0x23,0xf0,1]));const r=await nextNotify();
+  if(r&&r[2]===0x23&&r[3]===0xf0){cur={brake:r[5],sleep:r[6],timeout:r[7]|(r[8]<<8)};paintSettings();log(`settings brake=${cur.brake} sleep=${cur.sleep} t=${cur.timeout}s`);}}
+function paintSettings(){const b=$('#brake'),s=$('#sleep'),sel=$('#timeout');b.textContent=cur.brake?'ON':'OFF';s.textContent=cur.sleep?'ON':'OFF';
+  if(![...sel.options].some(o=>+o.value===cur.timeout)){const o=document.createElement('option');o.value=cur.timeout;o.textContent=(cur.timeout%60?cur.timeout+'s':cur.timeout/60+'m');sel.appendChild(o);}
+  sel.value=cur.timeout;}
+async function applySettings(){const t=+$('#timeout').value||cur.timeout;
+  await wCmd(Uint8Array.from([0x94,0xf2,0x23,0xf0,1,cur.brake&1,cur.sleep&1,t&0xff,(t>>8)&0xff,1]));await nextNotify();log('settings applied','#9f9');await readSettings();}
+async function pushFile(file){const fr=codec.uploadFrames(file,Math.floor(Date.now()/1000));
+  log(`pushing ${fr.size}B crc=0x${fr.crc.toString(16)} ${fr.nchunks} chunks…`,'#fc9');
+  await wCmd(fr.start);await nextNotify();await wCmd(fr.header);await nextNotify();
+  for(const ch of fr.chunkFrames)await wData(ch);await wCmd(fr.commit);await nextNotify();log('upload complete','#9f9');}
+async function selectSlot(i){await wCmd(Uint8Array.from([0x94,0xf2,0x23,0xe1,1,1,i&0xff,0,0,0]));await nextNotify();log('showing slot '+(i+1),'#9f9');}
+
+/* ---- pixel grid (shared draw helpers) ---- */
+function mkGrid(canvasSel, getSet, onChange){
+  const cvs=$(canvasSel),ctx=cvs.getContext('2d');
+  function draw(){ctx.clearRect(0,0,cvs.width,cvs.height);
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){const L=codec.ledIndex(r,c);
+      ctx.fillStyle=getSet().has(L)?'#ff3b3b':(codec.isCorner(r,c)?'#0b0e18':'#141a30');ctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);}}
+  let painting=false,val=true;
+  const cell=ev=>{const b=cvs.getBoundingClientRect();return{r:Math.floor((ev.clientY-b.top)*cvs.height/b.height/CELL),c:Math.floor((ev.clientX-b.left)*cvs.width/b.width/CELL)};};
+  const paint=ev=>{const{r,c}=cell(ev);if(r<0||r>=N||c<0||c>=N||codec.isCorner(r,c))return;const L=codec.ledIndex(r,c);val?getSet().add(L):getSet().delete(L);draw();if(onChange)onChange();};
+  cvs.addEventListener('pointerdown',e=>{const{r,c}=cell(e);if(codec.isCorner(r,c))return;painting=true;val=!getSet().has(codec.ledIndex(r,c));paint(e);});
+  cvs.addEventListener('pointermove',e=>{if(painting)paint(e);});addEventListener('pointerup',()=>painting=false);
+  return draw;
+}
+const lit=new Set(),gifLit=new Set();
+const drawGrid=mkGrid('#grid',()=>lit), drawGif=mkGrid('#gifGrid',()=>gifLit,()=>syncActiveFrame());
+$('#clear').onclick=()=>{lit.clear();drawGrid();};$('#fill').onclick=()=>{fillAll(lit);drawGrid();};
+$('#invert').onclick=()=>{invertAll(lit);drawGrid();};
+$('#gClear').onclick=()=>{gifLit.clear();drawGif();syncActiveFrame();};$('#gFill').onclick=()=>{fillAll(gifLit);drawGif();syncActiveFrame();};
+function fillAll(s){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!codec.isCorner(r,c))s.add(codec.ledIndex(r,c));}
+function invertAll(s){for(let r=0;r<N;r++)for(let c=0;c<N;c++){if(codec.isCorner(r,c))continue;const L=codec.ledIndex(r,c);s.has(L)?s.delete(L):s.add(L);}}
+$('#effect').onchange=()=>{const t=$('#effect').value;show('#timedRow',t!=='solid');show('#brightRow',t==='solid');$('#intLabel').textContent=t==='pulsing'?'Pulse interval':'Flash interval';};
+$('#bright').oninput=()=>$('#brightV').textContent=$('#bright').value+'%';
+$('#scrollSpeed').oninput=()=>$('#scrollSpeedV').textContent=$('#scrollSpeed').value;
+$('#gifFps').oninput=()=>$('#gifFpsV').textContent=$('#gifFps').value+' fps';
+
+/* ---- glyph font + image import ---- */
+function glyph(ch){const oc=document.createElement('canvas');oc.width=N;oc.height=N;const x=oc.getContext('2d');
+  x.fillStyle='#000';x.fillRect(0,0,N,N);x.fillStyle='#fff';x.font='bold 9px "DejaVu Sans Mono","Menlo","Courier New",monospace';
+  x.textAlign='center';x.textBaseline='middle';x.fillText(ch,N/2,N/2+0.5);return codec.imageToLeds(x.getImageData(0,0,N,N).data,N,N,90);}
+const textFrames=t=>[...(t||' ')].slice(0,codec.MAX_FRAMES).map(glyph);
+$('#rasterize').onclick=()=>{lit.clear();glyph(($('#toPix').value||' ')[0]).forEach(L=>lit.add(L));drawGrid();};
+$('#img').onchange=async e=>{const f=e.target.files[0];if(!f)return;const bmp=await createImageBitmap(f);
+  const oc=document.createElement('canvas');oc.width=N;oc.height=N;oc.getContext('2d').drawImage(bmp,0,0,N,N);
+  lit.clear();codec.imageToLeds(oc.getContext('2d').getImageData(0,0,N,N).data,N,N,128).forEach(L=>lit.add(L));drawGrid();log('image imported');};
+
+/* ---- store (localStorage) ---- */
+let store=JSON.parse(localStorage.getItem('l308store')||'[]'),editing=null,gifFrames=[],listAnim=null,synced=false;
+const stopListAnim=()=>{if(listAnim){clearInterval(listAnim.id);listAnim.reset();listAnim=null;}};
+const saveStore=()=>{localStorage.setItem('l308store',JSON.stringify(store));synced=false;};
+const pctToByte=p=>Math.max(1,Math.min(18,Math.round(p*0.175)));   // measured: byte ∝ %, 100%→0x12
+function previewLeds(e){return e.type==='gif'?(e.frames[0]||[]):e.type==='text'?glyph(((e.text||' ')[0]||' ')):(e.leds||[]);}
+function recordFromEntry(e,id){
+  if(e.type==='gif')return codec.framesRecord(id,0x02,e.frames,e.fps);
+  if(e.type==='text')return codec.framesRecord(id,0x04,textFrames(e.text),e.speed);
+  if(e.type==='solid')return codec.solidRecord(id,e.leds,pctToByte(e.bright));
+  return codec.timedRecord(id,e.leds,{pulsing:e.type==='pulsing',intervalSec:e.interval,minPct:e.min,maxPct:e.max});}
+// thumbnail + hover-to-play + ▶ persistent toggle (one animation at a time, page-wide)
+function thumb(itemEl,canvas,e){
+  const x=canvas.getContext('2d');
+  const paint=leds=>{x.fillStyle='#05070f';x.fillRect(0,0,N,N);x.fillStyle='#ff3b3b';(leds||[]).forEach(L=>x.fillRect(L%N,(L/N)|0,1,1));};
+  paint(previewLeds(e));
+  if(e.type!=='gif'&&e.type!=='text')return null;
+  const fr=e.type==='gif'?e.frames:textFrames(e.text),fps=e.type==='gif'?(e.fps||10):4;
+  const go=(persist,btn)=>{stopListAnim();let k=0;const id=setInterval(()=>paint(fr[k++%fr.length]||[]),1000/Math.max(1,fps));
+    if(btn)btn.textContent='■';listAnim={id,persist,item:itemEl,reset:()=>{paint(previewLeds(e));if(btn)btn.textContent='▶';}};};
+  itemEl.addEventListener('mouseenter',()=>{if(!(listAnim&&listAnim.persist))go(false,null);});
+  itemEl.addEventListener('mouseleave',()=>{if(listAnim&&!listAnim.persist&&listAnim.item===itemEl)stopListAnim();});
+  const btn=document.createElement('button');btn.className='ghost sm';btn.textContent='▶';
+  btn.onclick=ev=>{ev.stopPropagation();(listAnim&&listAnim.persist&&listAnim.item===itemEl)?stopListAnim():go(true,btn);};
+  return btn;
+}
+function renderStore(){stopListAnim();const g=$('#store');g.innerHTML='';$('#storeCount').textContent=`(${store.length})`;
+  store.forEach((e,i)=>{const d=document.createElement('div');d.className='item';d.draggable=true;
+    d.ondragstart=ev=>{ev.dataTransfer.setData('text/plain',i);ev.dataTransfer.effectAllowed='move';};
+    d.ondragover=ev=>{ev.preventDefault();d.style.borderColor='var(--accent)';};
+    d.ondragleave=()=>d.style.borderColor='';
+    d.ondrop=ev=>{ev.preventDefault();d.style.borderColor='';const from=+ev.dataTransfer.getData('text/plain');
+      if(isNaN(from)||from===i)return;const[m]=store.splice(from,1);store.splice(i,0,m);saveStore();renderStore();};
+    const c=document.createElement('canvas');c.width=N;c.height=N;const pb=thumb(d,c,e);d.appendChild(c);
+    const meta=e.type==='gif'?e.frames.length+'f':e.type==='text'?'"'+(e.text||'').slice(0,5)+'"':(e.leds||[]).length+'px';
+    const t=document.createElement('div');t.className='t';t.innerHTML=`<span>${i+1}·${e.type}</span><span>${meta}</span>`;d.appendChild(t);
+    const canShow=cmdCh&&synced;
+    const row=document.createElement('div');row.className='row';
+    row.innerHTML=`<button class="ghost sm" data-e>Edit</button><button class="ghost sm" data-s ${canShow?'':'disabled'} title="${canShow?'show on light':'Push to light first'}">Show</button><button class="ghost sm" data-d>✕</button>`;
+    if(pb)row.prepend(pb);
+    row.querySelector('[data-e]').onclick=()=>openEditor(e.type,i);
+    row.querySelector('[data-s]').onclick=()=>{if(cmdCh&&synced)selectSlot(i);else log('push the store to the light first','#fc9');};
+    row.querySelector('[data-d]').onclick=()=>{
+      if(!confirm(`Delete pattern #${i+1} (${e.type})? This removes it from your local library only.`))return;
+      store.splice(i,1);saveStore();renderStore();log('deleted pattern #'+(i+1));};
+    d.appendChild(row);g.appendChild(d);});
+  const dirty=cmdCh&&store.length>0&&!synced;
+  $('#push').disabled=!dirty;$('#push').textContent=(cmdCh&&synced&&store.length>0)?'On light ✓':'Push to light';}
+
+/* ---- gif frames in editor (active-frame highlight + in-place edit + arrow stepping) ---- */
+let gifActive=0,gifThumbs=[],gifItems=[];
+function paintThumb(c,leds){const x=c.getContext('2d');x.fillStyle='#05070f';x.fillRect(0,0,N,N);x.fillStyle='#ff3b3b';(leds||[]).forEach(L=>x.fillRect(L%N,(L/N)|0,1,1));}
+function markFrame(i,cls){gifItems.forEach((el,k)=>{if(!el)return;el.classList.toggle('active',cls==='active'&&k===i);el.classList.toggle('playing',cls==='playing'&&k===i);});}
+function syncActiveFrame(){if(gifActive>=0&&gifActive<gifFrames.length){gifFrames[gifActive]=[...gifLit];if(gifThumbs[gifActive])paintThumb(gifThumbs[gifActive],gifFrames[gifActive]);}}
+function loadFrame(i){if(i<0||i>=gifFrames.length)return;gifActive=i;gifLit.clear();gifFrames[i].forEach(L=>gifLit.add(L));drawGif();markFrame(i,'active');}
+function renderGifFrames(){const g=$('#gifFrames');g.innerHTML='';gifThumbs=[];gifItems=[];$('#gifCount').textContent=`${gifFrames.length}/${codec.MAX_FRAMES} frames · ← → to step`;
+  gifFrames.forEach((leds,i)=>{const d=document.createElement('div');d.className='item'+(i===gifActive?' active':'');gifItems[i]=d;
+    const c=document.createElement('canvas');c.width=N;c.height=N;gifThumbs[i]=c;paintThumb(c,leds);
+    c.style.cursor='pointer';c.title='Edit frame '+(i+1);c.onclick=()=>loadFrame(i);d.appendChild(c);
+    const t=document.createElement('div');t.className='t';t.innerHTML=`<span>#${i+1}</span><span data-d title="delete frame" style="cursor:pointer">✕</span>`;
+    t.querySelector('[data-d]').onclick=ev=>{ev.stopPropagation();gifFrames.splice(i,1);if(gifActive>=gifFrames.length)gifActive=gifFrames.length-1;renderGifFrames();if(gifActive>=0)loadFrame(gifActive);};
+    d.appendChild(t);g.appendChild(d);});}
+$('#gAddFrame').onclick=()=>{if(gifFrames.length>=codec.MAX_FRAMES){log('max 10 frames','#fc9');return;}
+  gifFrames.splice(gifActive+1,0,[...gifLit]);gifActive=Math.min(gifActive+1,gifFrames.length-1);renderGifFrames();loadFrame(gifActive);};
+let gAnim=null,gifPlayFrame=0;
+function stopGif(){if(gAnim){clearInterval(gAnim);gAnim=null;$('#gPlay').textContent='Preview ▶';loadFrame(gifPlayFrame);}}  // stay on the frame it stopped on
+$('#gPlay').onclick=()=>{if(gAnim){stopGif();return;}if(!gifFrames.length)return;
+  let i=0;$('#gPlay').textContent='Stop ■';gAnim=setInterval(()=>{const f=i%gifFrames.length;gifPlayFrame=f;gifLit.clear();gifFrames[f].forEach(L=>gifLit.add(L));drawGif();markFrame(f,'playing');i++;},1000/(+$('#gifFps').value||10));};
+addEventListener('keydown',e=>{   // arrow keys step frames while the GIF editor is open
+  if(!$('#editorCard').open||$('#editorCard').dataset.kind!=='gif'||gifFrames.length<2)return;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement?.tagName||''))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();stopGif();loadFrame((gifActive+1)%gifFrames.length);}
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();stopGif();loadFrame((gifActive-1+gifFrames.length)%gifFrames.length);}});
+
+/* ---- scrolling text preview ---- */
+let scrollAnim=null;
+function previewScroll(){const frames=textFrames($('#scrollText').value||' '),cols=[];
+  frames.forEach(leds=>{const g=new Set(leds);let lo=N,hi=-1;
+    for(let c=0;c<N;c++)for(let r=0;r<N;r++)if(g.has(r*N+c)){lo=Math.min(lo,c);hi=Math.max(hi,c);}
+    if(hi<0){cols.push(null,null);return;}for(let c=lo;c<=hi;c++){const col=[];for(let r=0;r<N;r++)if(g.has(r*N+c))col.push(r);cols.push(col);}cols.push(null);});
+  const cv=$('#scrollCanvas'),x=cv.getContext('2d'),cw=cv.width/N,ch=cv.height/N;
+  if(scrollAnim)cancelAnimationFrame(scrollAnim);if(!cols.length){x.clearRect(0,0,cv.width,cv.height);return;}
+  let off=0;const spd=+$('#scrollSpeed').value;
+  (function f(){x.fillStyle='#05070f';x.fillRect(0,0,cv.width,cv.height);x.fillStyle='#ff3b3b';
+    for(let v=0;v<N;v++){const col=cols[(((Math.floor(off)+v)%cols.length)+cols.length)%cols.length];if(col)col.forEach(r=>x.fillRect(v*cw,r*ch,cw-1,ch-1));}
+    off+=spd/120;scrollAnim=requestAnimationFrame(f);})();}
+$('#scrollText').oninput=previewScroll;
+
+/* ---- add / edit flow ---- */
+function openChooser(){editing=null;openDlg('#chooserCard');}
+document.querySelectorAll('[data-new]').forEach(el=>el.onclick=()=>{closeDlg('#chooserCard');openEditor(el.dataset.new,null);});
+$('#addNew').onclick=openChooser;$('#chooserCancel').onclick=()=>closeDlg('#chooserCard');
+$('#edCancel').onclick=()=>closeDlg('#editorCard');
+$('#editorCard').addEventListener('close',()=>{if(gAnim){clearInterval(gAnim);gAnim=null;}});
+
+function openEditor(kind,idx){   // kind: 'pattern'|'gif'|'text' OR an effect type when editing
+  editing=idx;stopListAnim();const isPattern=['pattern','solid','flashing','pulsing'].includes(kind);
+  closeDlg('#chooserCard');openDlg('#editorCard');
+  show('#edPattern',isPattern);show('#edGif',kind==='gif');show('#edText',kind==='text');
+  $('#edTitle').textContent=(idx==null?'New ':'Editing #'+(idx+1)+' — ')+(kind==='gif'?'GIF':kind==='text'?'scrolling text':'pattern');
+  const e=idx!=null?store[idx]:null;
+  if(isPattern){lit.clear();(e?.leds||[]).forEach(L=>lit.add(L));
+    const eff=e?e.type:'solid';$('#effect').value=eff;$('#effect').onchange();
+    $('#bright').value=e?.bright??60;$('#brightV').textContent=($('#bright').value)+'%';
+    $('#interval').value=e?.interval??2;$('#minp').value=e?.min??20;$('#maxp').value=e?.max??80;drawGrid();}
+  if(kind==='gif'){gifFrames=e?e.frames.map(f=>[...f]):[];gifActive=0;gifLit.clear();
+    $('#gifFps').value=e?.fps??10;$('#gifFpsV').textContent=$('#gifFps').value+' fps';renderGifFrames();if(gifFrames.length)loadFrame(0);else drawGif();}
+  if(kind==='text'){$('#scrollText').value=e?.text||'';$('#scrollSpeed').value=e?.speed??30;$('#scrollSpeedV').textContent=$('#scrollSpeed').value;previewScroll();}
+  $('#editorCard').dataset.kind=kind;
+}
+$('#edSave').onclick=()=>{const kind=$('#editorCard').dataset.kind;let entry;
+  if(kind==='gif'){if(gifFrames.length<2){log('need ≥2 frames','#fc9');return;}entry={type:'gif',frames:gifFrames.map(f=>[...f]),fps:+$('#gifFps').value||10};}
+  else if(kind==='text'){const t=$('#scrollText').value||'';if(!t){log('enter text','#fc9');return;}entry={type:'text',text:t,speed:+$('#scrollSpeed').value};}
+  else{entry={leds:[...lit],type:$('#effect').value,bright:+$('#bright').value,interval:+$('#interval').value,min:+$('#minp').value,max:+$('#maxp').value};}
+  if(editing!=null)store[editing]=entry;else store.push(entry);
+  saveStore();renderStore();closeDlg('#editorCard');if(gAnim){clearInterval(gAnim);gAnim=null;}
+  log((editing!=null?'updated':'added')+' '+kind);};
+
+/* ---- library (defaults + community + imported) ---- */
+const byteToPct=b=>Math.max(0,Math.min(100,Math.round(b/0.175)));   // inverse of pctToByte
+function packToEntry(p){
+  if(p.effect==='animation')return{type:'gif',frames:p.frames,fps:p.param||10,label:p.label||p.name||''};
+  if(p.effect==='text')return{type:'text',text:p.text||'',speed:p.param||30,label:p.label||''};
+  if(p.effect==='flashing'||p.effect==='pulsing')return{type:p.effect,leds:p.leds||[],min:p.minPct??20,max:p.maxPct??80,interval:p.intervalSec||2,label:p.label||p.name||''};
+  return{type:'solid',leds:p.leds||[],bright:byteToPct(p.brightness??18),label:p.name||p.label||''};}
+let packs={default:[],community:[],imported:[]},libTab='default';
+async function loadPacks(){
+  try{const d=await(await fetch('default_patterns/defaults.json')).json();packs.default=(d.patterns||[]).map(packToEntry);}catch(e){log('no defaults pack found','#fc9');}
+  try{const r=await fetch('community_patterns/patterns.json');if(r.ok){const c=await r.json();packs.community=(c.patterns||[]).map(packToEntry);}}catch(e){}
+  renderLibrary();}
+const libList=()=>libTab==='community'?[...packs.community,...packs.imported]:packs[libTab];
+function renderLibrary(){stopListAnim();const items=libList();$('#libCount').textContent=`(${items.length})`;
+  document.querySelectorAll('.libtab').forEach(b=>b.style.background=b.dataset.src===libTab?'var(--accent)':'#26304f');
+  $('#libNote').textContent=libTab==='community'
+    ?(items.length?'Community pack — local only; excluded from a public/GitHub build.':'No community pack in this build (it\'s local-only). Use "Import pack…".')
+    :'Built-in originals — public-safe.';
+  const g=$('#library');g.innerHTML='';
+  items.forEach(e=>{const d=document.createElement('div');d.className='item';
+    const c=document.createElement('canvas');c.width=N;c.height=N;const pb=thumb(d,c,e);d.appendChild(c);
+    const t=document.createElement('div');t.className='t';t.innerHTML=`<span>${e.type}</span><span>${(e.label||'').slice(0,8)}</span>`;d.appendChild(t);
+    const row=document.createElement('div');row.className='row';row.innerHTML=`<button class="sm" data-a>+ Set</button>`;
+    if(pb)row.prepend(pb);
+    row.querySelector('[data-a]').onclick=()=>{const{label,...rest}=e;store.push(JSON.parse(JSON.stringify(rest)));saveStore();renderStore();log('added "'+(label||e.type)+'" to set');};
+    d.appendChild(row);g.appendChild(d);});}
+document.querySelectorAll('.libtab').forEach(b=>b.onclick=()=>{libTab=b.dataset.src;renderLibrary();});
+$('#importPack').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());
+  packs.imported.push(...(j.patterns||j||[]).map(packToEntry));libTab='community';renderLibrary();log('imported pattern pack (local only)');}catch(e){log('import failed: '+e,'#f99');}};
+
+/* ---- push / backup ---- */
+const buildStoreFile=()=>codec.buildFile(store.map((e,i)=>recordFromEntry(e,0x8a10+i)));
+$('#push').onclick=async()=>{
+  if(!confirm(`Push ${store.length} pattern(s) to the light?\n\nThis is the only action that writes to the light, and it REPLACES the light's entire store — there's no read-back, so whatever is on the light now is overwritten.\n\nYour local library and "Backup .bin" are not affected.`))return;
+  try{await pushFile(buildStoreFile());synced=true;renderStore();log('store matches the light — "Show" enabled','#9f9');}catch(e){log('error '+e,'#f99');}};
+$('#export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buildStoreFile()]));a.download='light_mode.bin';a.click();};
+$('#importBin').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=new Uint8Array(await f.arrayBuffer());
+  store=codec.parseFile(buf).records.map(r=>{const ty=r[4];
+    if(ty===0x02||ty===0x04)return{type:'gif',frames:codec.framesFromRecord(r),fps:r[7]||10};
+    if(ty===0x03)return{leds:codec.bitmapToLeds(r),type:(r[7]&0x80?'pulsing':'flashing'),bright:60,interval:2,min:r[10]||20,max:r[9]||80};
+    return{leds:codec.bitmapToLeds(r),type:'solid',bright:60};});
+  saveStore();renderStore();log(`restored ${store.length} patterns from file`);};
+
+/* ---- wire + init ---- */
+$('#connect').onclick=()=>connect().catch(e=>log('error: '+e,'#f99'));
+$('#applySettings').onclick=applySettings;$('#brake').onclick=()=>{cur.brake^=1;paintSettings();};$('#sleep').onclick=()=>{cur.sleep^=1;paintSettings();};
+renderStore();loadPacks();$('#effect').onchange();
+if(!navigator.bluetooth)log('Web Bluetooth unavailable — use Chrome/Edge desktop or Android.','#f99');
+else log('ready — Connect a light, or "+ Create new" to build a pattern.');
+</script>
+</body>
+</html>
