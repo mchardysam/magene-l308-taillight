@@ -1,5 +1,10 @@
 # Magene L308 — unofficial interop tools
 
+<p align="center">
+  <img src="docs/hero.svg" width="660"
+       alt="The L308's 10×10 LED panel rendering a heart, an alert arrow, and a scrolling-text glyph">
+</p>
+
 Control a Magene **L308** smart taillight directly over Bluetooth LE — select patterns, set
 brightness, toggle the brake-alert, change the auto-sleep timeout, and upload your own pattern
 store — without the official app. Works on region-locked units too (the region lock is
@@ -9,6 +14,26 @@ app/cloud-side, not enforced on the device).
 > "L308" are trademarks of their respective owner, used here nominatively to identify the
 > device this project interoperates with. For interoperability/repair on hardware you own.
 > No warranty — use at your own risk.
+
+## What the L308 is
+The L308 isn't a normal blinky. Its rear face is a **10×10 grid of 96 red LEDs** — a little
+programmable dot-matrix display. Beyond the usual solid / flash / pulse, you can show **custom
+pixel art, multi-frame animations, and scrolling text**, and it has an accelerometer
+**brake-alert** (flares when you slow) plus an **auto-sleep** timeout. That programmability is
+what sets it apart from just about every other taillight — and it's exactly what makes a proper
+control tool worthwhile.
+
+## Why this exists
+1. **Better, simpler control.** All that programmability is buried deep in the OnelapFit app.
+   I wanted to draw a pattern, set the brightness, and push it to the light in a few seconds
+   from a browser — no account, no app-store install, no menu-diving. So I decoded the BLE
+   protocol and built a focused tool around it.
+2. **Region-locked units.** Some L308s are region-locked *in the app*, even though the lock
+   isn't enforced on the device. These tools talk to the light directly, so if you own the
+   hardware you can use it regardless.
+
+It's interoperability for hardware you own — nothing more. Not affiliated with Magene; if
+they'd like something changed, I'm happy to hear from them.
 
 ## What's here
 - **[`spec/`](spec/L308-ble-protocol.md)** — the BLE + `light_mode.bin` protocol reference (source of truth).
