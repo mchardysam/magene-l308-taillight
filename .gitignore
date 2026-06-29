@@ -14,4 +14,6 @@ node_modules/
 __pycache__/
 *.pyc
 .claude/
+# MCP config can hold API tokens — never commit it to this public repo
+.mcp.json
 .DS_Store
