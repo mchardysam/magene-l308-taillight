@@ -41,6 +41,12 @@
 </head>
 <body>
 <header><h1>L308 Manager <span class="sub">· unofficial · works on region-locked units</span></h1></header>
+<div id="nobt" class="hidden" style="background:#3a2a2a;color:#ffd6d6;padding:11px 16px;font-size:13px;line-height:1.5;border-bottom:1px solid #5a3a3a">
+  ⚠️ This browser can't connect to the light — it has no <b>Web Bluetooth</b> support.
+  Use <b>Chrome</b> or <b>Edge</b> on <b>desktop</b> or <b>Android</b>
+  (Firefox, Safari, and all <b>iOS</b> browsers are unsupported). You can still design,
+  preview, import and export patterns here.
+</div>
 <main>
   <!-- connection + settings -->
   <div class="card"><div class="row">
@@ -144,6 +150,9 @@
           <option value='system-ui,"Segoe UI",Roboto,sans-serif'>Sans</option>
           <option value='"Arial Narrow","Roboto Condensed",sans-serif'>Condensed</option>
           <option value='Georgia,"Times New Roman",serif'>Serif</option>
+          <option value='Verdana,Tahoma,Geneva,sans-serif'>Wide</option>
+          <option value='Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif'>Heavy</option>
+          <option value='Rockwell,"Roboto Slab","Courier New",serif'>Slab</option>
           <option value='"Comic Sans MS","Comic Neue",system-ui'>Rounded</option>
         </select>
         <label>Speed</label><input type="range" id="scrollSpeed" min="1" max="60" value="30"><span id="scrollSpeedV" class="muted">30</span></div>
@@ -428,7 +437,8 @@ $('#importBin').onchange=async e=>{const f=e.target.files[0];if(!f)return;const 
 $('#connect').onclick=()=>connect().catch(e=>log('error: '+e,'#f99'));
 $('#applySettings').onclick=applySettings;$('#brake').onclick=()=>{cur.brake^=1;paintSettings();};$('#sleep').onclick=()=>{cur.sleep^=1;paintSettings();};
 renderStore();loadPacks();$('#effect').onchange();
-if(!navigator.bluetooth)log('Web Bluetooth unavailable — use Chrome/Edge desktop or Android.','#f99');
+if(!navigator.bluetooth){$('#nobt').classList.remove('hidden');const c=$('#connect');c.disabled=true;c.title='This browser has no Web Bluetooth support';
+  log('Web Bluetooth unavailable — use Chrome/Edge desktop or Android. You can still design/export patterns.','#f99');}
 else log('ready — Connect a light, or "+ Create new" to build a pattern.');
 </script>
 </body>
