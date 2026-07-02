@@ -54,8 +54,8 @@ exists:
    hardware you can use it regardless.
 3. **Control from other devices.** The Magene C606 head unit has a widget that changes the
    light's pattern while you ride, and I wanted that same on-the-bike control from a Garmin.
-   Talking to the light directly makes that possible: a Garmin Connect IQ app that does just this
-   is in the works, and the web app covers the same ground from a browser.
+   Talking to the light directly makes that possible: there are now Garmin Connect IQ apps that do
+   exactly this, and the web app covers the same ground from a browser.
 
 It's interoperability for hardware you own, nothing more. Not affiliated with Magene; if they'd
 like something changed, I'm happy to hear from them.
@@ -83,8 +83,9 @@ affiliated with Magene.*
   (solid, flashing, pulsing, GIF, scrolling text), manage settings and push to the light. Runs
   in Chrome/Edge (desktop or Android) and deploys to GitHub Pages.
 - **Python CLI** (`l308_send.py`, `l308_upload.py`, `l308_explore.py`): needs `bleak`.
-
-A **Garmin Connect IQ** app to cycle patterns from a watch or Edge is in the works.
+- **[`garmin/`](garmin/)** and **[`garmin-datafield/`](garmin-datafield/)**: **Garmin Connect IQ**
+  apps for the watch or Edge, a manual controller and an auto data field (see
+  [On the bike](#on-the-bike-garmin)).
 
 ## Quick start (Python)
 ```sh
@@ -104,6 +105,35 @@ cd web && python3 -m http.server 8753
 Open `http://localhost:8753` in Chrome/Edge and click **Connect light**. Or push `web/` to a
 GitHub Pages site, where the `https://` URL satisfies Web Bluetooth's secure-context requirement.
 (Web Bluetooth works on Chrome/Edge desktop and Android, but not iOS Safari.)
+
+## On the bike (Garmin)
+Two Garmin Connect IQ apps, in [`garmin/`](garmin/) and
+[`garmin-datafield/`](garmin-datafield/), control the light from a watch or Edge using the same
+Bluetooth commands as everything else here.
+
+**L308 Light** is a manual app. Connect to the light and step through the patterns stored on it,
+from your wrist or your bars.
+
+<p align="center">
+  <img src="garmin/screen.png" width="240"
+       alt="The L308 Light app on a watch, showing pattern 5 of 8 with prev and next arrows">
+</p>
+
+**L308 Auto** is a data field you drop onto a ride screen. It switches the pattern for you as you
+ride: a group mode that holds a steady, calmer pattern so you are not flashing the rider on your
+wheel, optional speed, power and cadence bands, and a battery saver, plus a manual mode that
+leaves the light alone. It connects once at the start of the ride and only writes to the light
+when the pattern needs to change.
+
+<p align="center">
+  <img src="garmin-datafield/watch_view.png" width="220" alt="L308 Auto data field connected on a watch">
+  &nbsp;&nbsp;
+  <img src="garmin-datafield/device.png" width="220" alt="L308 Auto data field on an Edge, across data-screen layouts">
+</p>
+
+Both build from `source/` with the Connect IQ SDK, and each folder has its own build and sideload
+notes. You need a Magene L308 for them to do anything, and like the rest of the project they only
+ever send the vendor pattern commands, never firmware.
 
 ## Backups and the OnelapFit cloud
 One thing worth understanding before you start. The official OnelapFit app stores your patterns

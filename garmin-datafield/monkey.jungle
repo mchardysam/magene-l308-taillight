@@ -1,0 +1,11 @@
+# L308 rules data field build config.
+project.manifest = manifest.xml
+
+# Shared Protocol.mc (UUIDs + command bytes), kept in one place for both products.
+base.sourcePath = source;../garmin-shared
+
+# Device-capability scoping (the SmartBikeLights pattern): touch-screen devices compile the
+# tap InputDelegate for in-ride control; non-touch devices get the display-only build.
+# Default build = touch (exclude the nonTouchScreen code); list non-touch devices to flip it.
+base.excludeAnnotations = nonTouchScreen
+edge530.excludeAnnotations = touchScreen

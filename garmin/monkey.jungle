@@ -1,0 +1,7 @@
+# Connect IQ build configuration.
+# Single product/manifest project — the manifest lists all targeted devices.
+project.manifest = manifest.xml
+
+# Pull shared Protocol.mc (UUIDs + command bytes) from the sibling shared dir,
+# so the app and the data field stay byte-for-byte in sync.
+base.sourcePath = source;../garmin-shared

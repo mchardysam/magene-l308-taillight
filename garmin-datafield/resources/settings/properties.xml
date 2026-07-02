@@ -1,0 +1,24 @@
+<properties>
+    <property id="mode" type="number">0</property>
+    <property id="defaultPattern" type="number">1</property>
+    <property id="groupPattern" type="number">1</property>
+
+    <property id="speedEnabled" type="boolean">true</property>
+    <property id="speedThreshold" type="number">40</property>
+    <property id="speedPattern" type="number">2</property>
+
+    <property id="powerEnabled" type="boolean">false</property>
+    <property id="powerThreshold" type="number">250</property>
+    <property id="powerPattern" type="number">2</property>
+
+    <property id="cadenceEnabled" type="boolean">false</property>
+    <property id="cadenceThreshold" type="number">90</property>
+    <property id="cadencePattern" type="number">2</property>
+
+    <property id="batteryEnabled" type="boolean">false</property>
+    <property id="batteryPct" type="number">15</property>
+    <property id="batteryPattern" type="number">1</property>
+
+    <property id="hysteresis" type="number">3</property>
+    <property id="minDwellSec" type="number">8</property>
+</properties>

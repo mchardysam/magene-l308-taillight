@@ -1,0 +1,17 @@
+# Connect IQ build output / generated
+bin/
+gen/
+external-mir/
+internal-mir/
+*.prg
+*.prg.debug.xml
+*.iq
+*.mir
+*.mcgen
+*.mbc
+*-settings.json
+
+# Developer signing key (never commit)
+developer_key
+developer_key.pem
+*.der

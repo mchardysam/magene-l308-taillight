@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <!-- L308 rules data field: auto pattern switching by ride data. Separate product/app-id
+         from the manual app (CIQ storage/settings are per app-id). Only writes 8ce5cc05;
+         never touches the SMP service. -->
+    <iq:application entry="L308DataFieldApp" id="8324cd0d6b9a4609b9f14efb1500a816" launcherIcon="@Drawables.LauncherIcon" name="@Strings.AppName" type="datafield" minApiLevel="3.1.0">
+        <iq:products>
+            <iq:product id="fr965"/>
+            <iq:product id="fr955"/>
+            <iq:product id="edge530"/>
+            <iq:product id="edge830"/>
+            <iq:product id="edge1030"/>
+            <iq:product id="edge1040"/>
+            <iq:product id="fenix7"/>
+            <iq:product id="fenix7x"/>
+            <iq:product id="epix2"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="BluetoothLowEnergy"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

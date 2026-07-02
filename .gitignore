@@ -4,9 +4,14 @@ private/
 # Local community pattern pack the web app optionally loads (it handles absence gracefully).
 web/community_patterns/
 
-# Build keys (also covered by garmin/.gitignore)
+# Build keys (also covered by the per-folder .gitignore)
 garmin/developer_key
 garmin/developer_key.pem
+garmin-datafield/developer_key
+garmin-datafield/developer_key.pem
+
+# Local working backup of the pre-trim (radar) data field — never published
+garmin-datafield-full-backup/
 
 # env / build / local
 .venv/

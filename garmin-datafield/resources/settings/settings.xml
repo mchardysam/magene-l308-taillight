@@ -1,0 +1,56 @@
+<settings>
+    <setting propertyKey="@Properties.mode" title="@Strings.s_mode">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.s_modeAuto</listEntry>
+            <listEntry value="1">@Strings.s_modeManual</listEntry>
+            <listEntry value="2">@Strings.s_modeGroup</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.defaultPattern" title="@Strings.s_default">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+    <setting propertyKey="@Properties.groupPattern" title="@Strings.s_groupPattern">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+
+    <setting propertyKey="@Properties.speedEnabled" title="@Strings.s_speedEnabled">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.speedThreshold" title="@Strings.s_speedThreshold">
+        <settingConfig type="numeric" min="5" max="100" />
+    </setting>
+    <setting propertyKey="@Properties.speedPattern" title="@Strings.s_speedPattern">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+
+    <setting propertyKey="@Properties.powerEnabled" title="@Strings.s_powerEnabled">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.powerThreshold" title="@Strings.s_powerThreshold">
+        <settingConfig type="numeric" min="50" max="1000" />
+    </setting>
+    <setting propertyKey="@Properties.powerPattern" title="@Strings.s_powerPattern">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+
+    <setting propertyKey="@Properties.cadenceEnabled" title="@Strings.s_cadenceEnabled">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.cadenceThreshold" title="@Strings.s_cadenceThreshold">
+        <settingConfig type="numeric" min="30" max="150" />
+    </setting>
+    <setting propertyKey="@Properties.cadencePattern" title="@Strings.s_cadencePattern">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+
+    <setting propertyKey="@Properties.batteryEnabled" title="@Strings.s_batteryEnabled">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.batteryPct" title="@Strings.s_batteryPct">
+        <settingConfig type="numeric" min="5" max="50" />
+    </setting>
+    <setting propertyKey="@Properties.batteryPattern" title="@Strings.s_batteryPattern">
+        <settingConfig type="numeric" min="1" max="30" />
+    </setting>
+</settings>

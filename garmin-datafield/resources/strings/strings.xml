@@ -1,0 +1,27 @@
+<strings>
+    <string id="AppName">L308 Auto</string>
+
+    <string id="s_mode">Mode</string>
+    <string id="s_modeAuto">Auto (rules)</string>
+    <string id="s_modeManual">Manual (off)</string>
+    <string id="s_modeGroup">Group (steady)</string>
+
+    <string id="s_default">Default pattern</string>
+    <string id="s_groupPattern">Group pattern</string>
+
+    <string id="s_speedEnabled">Speed rule on</string>
+    <string id="s_speedThreshold">Speed threshold (km/h)</string>
+    <string id="s_speedPattern">Speed pattern</string>
+
+    <string id="s_powerEnabled">Power rule on</string>
+    <string id="s_powerThreshold">Power threshold (W)</string>
+    <string id="s_powerPattern">Power pattern</string>
+
+    <string id="s_cadenceEnabled">Cadence rule on</string>
+    <string id="s_cadenceThreshold">Cadence threshold (rpm)</string>
+    <string id="s_cadencePattern">Cadence pattern</string>
+
+    <string id="s_batteryEnabled">Battery saver on</string>
+    <string id="s_batteryPct">Battery saver below (%)</string>
+    <string id="s_batteryPattern">Battery saver pattern</string>
+</strings>
