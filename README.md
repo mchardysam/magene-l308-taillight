@@ -113,6 +113,7 @@ Bluetooth commands as everything else here.
 
 **L308 Light** is a manual app. Connect to the light and step through the patterns stored on it,
 from your wrist or your bars.
+**[Get it on the Connect IQ Store](https://apps.garmin.com/apps/de4016e9-82c8-4d0f-a292-0075788f4236)**
 
 <p align="center">
   <img src="garmin/screen.png" width="240"
@@ -124,6 +125,7 @@ ride: a group mode that holds a steady, calmer pattern so you are not flashing t
 wheel, optional speed, power and cadence bands, and a battery saver, plus a manual mode that
 leaves the light alone. It connects once at the start of the ride and only writes to the light
 when the pattern needs to change.
+**[Get it on the Connect IQ Store](https://apps.garmin.com/apps/7a29489d-4115-451e-a1de-a74fa5b31034)**
 
 <p align="center">
   <img src="garmin-datafield/watch_view.png" width="220" alt="L308 Auto data field connected on a watch">
